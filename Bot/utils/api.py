@@ -82,6 +82,7 @@ def get_categories():
             return res.json()
     except:
         pass
+        print("xatolik categoriy abosh")
     return []
 
 def get_products():

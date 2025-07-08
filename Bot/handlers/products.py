@@ -124,9 +124,7 @@ async def show_categories(msg: Message, state: FSMContext):
     # Set language based on which button was pressed
     user_language = "ru" if msg.text == "🛍 Продукты" else "uz"
     await set_user_language(state, user_language)
-
     categories = get_categories()
-    await msg.answer("mahsulot!!!!", categories)
     if not categories:
         await msg.answer("❌ Категории не найдены." if user_language == "ru" else "❌ Kategoriyalar topilmadi.")
         return
