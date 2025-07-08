@@ -529,8 +529,6 @@ async def request_user_photo(call: CallbackQuery, state: FSMContext):
     await call.message.answer("📸 Отправьте фото. Оно будет добавлено к изображению товара." if user_language == "ru" else "📸 Rasm yuboring. U mahsulot rasmingizga qo'shiladi.")
 
 
-MAX_WIDTH = 150
-MAX_HEIGHT = 100
 @router.message(F.photo | F.document)
 async def handle_user_photo(msg: Message, state: FSMContext, bot: Bot):
     user_language = await get_user_language(state)
@@ -561,10 +559,7 @@ async def handle_user_photo(msg: Message, state: FSMContext, bot: Bot):
         photo_file = BytesIO()
         await bot.download_file(tg_file.file_path, destination=photo_file)
         photo_file.seek(0)
-        user_img = Image.open(photo_file).convert("RGBA")
-
-        # Nisbatni saqlab maksimal o'lchamga kichiklashtirish
-        user_img.thumbnail((MAX_WIDTH, MAX_HEIGHT), Image.ANTIALIAS)
+        user_img = Image.open(photo_file).convert("RGBA").resize((150, 150))
 
         product_url = product['photo'].replace("http://127.0.0.1:8000", DOMAIN_URL)
         resp = requests.get(product_url)
@@ -575,12 +570,8 @@ async def handle_user_photo(msg: Message, state: FSMContext, bot: Bot):
         product_img = Image.open(BytesIO(resp.content)).convert("RGBA")
 
         pw, ph = product_img.size
-        uw, uh = user_img.size
-
-        # Markazlashtirish koordinatalari
-        px = (pw - uw) // 2
-        py = (ph - uh) // 2
-
+        px = (pw - 150) // 2
+        py = (ph - 10) // 2
         product_img.paste(user_img, (px, py), user_img)
 
         out = BytesIO()
