@@ -567,7 +567,7 @@ async def handle_user_photo(msg: Message, state: FSMContext, bot: Bot):
 
         pw, ph = product_img.size
         px = (pw - 150) // 2
-        py = (ph - 10) // 2
+        py = (ph - 15) // 2
         product_img.paste(user_img, (px, py), user_img)
 
         out = BytesIO()
