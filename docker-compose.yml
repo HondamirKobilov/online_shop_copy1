@@ -1,0 +1,43 @@
+services:
+  web:
+    build: .
+    container_name: django_app
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    expose:
+      - "8000"
+    environment:
+      - PYTHONPATH=/app
+
+  bot:
+    build: .
+    container_name: telegram_bot
+    command: python Bot/main.py
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app
+    depends_on:
+      - web
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    depends_on:
+      - web
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt

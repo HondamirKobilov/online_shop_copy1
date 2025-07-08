@@ -1,4 +1,11 @@
-FROM ubuntu:latest
-LABEL authors="xondamir"
+# Dockerfile
+FROM python:3.12-slim
 
-ENTRYPOINT ["top", "-b"]
+WORKDIR /app
+
+COPY . /app/
+
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+CMD ["bash"]
