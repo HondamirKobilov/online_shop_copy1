@@ -286,10 +286,10 @@ async def product_detail(call: CallbackQuery, state: FSMContext):
         product_photos=photo_urls
     )
 
-@router.callback_query(F.data.startswith("color_"))
-async def color_selected(call: CallbackQuery, state: FSMContext):
-    await call.message.delete()
-    user_language = await get_user_language(state)
+# @router.callback_query(F.data.startswith("color_"))
+# async def color_selected(call: CallbackQuery, state: FSMContext):
+#     await call.message.delete()
+#     user_language = await get_user_language(state)
 @router.callback_query(F.data.startswith("color_"))
 async def color_selected(call: CallbackQuery, state: FSMContext):
     await call.message.delete()
