@@ -9,5 +9,5 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 CMD ["bash"]
-COPY Bot/handlers/1.jpg /app/handlers/1.jpg
+COPY Bot/handlers/1.jpg handlers/1.jpg
 
