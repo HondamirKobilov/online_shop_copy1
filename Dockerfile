@@ -11,3 +11,4 @@ RUN pip install -r requirements.txt
 CMD ["bash"]
 COPY Bot/handlers/1.jpg handlers/1.jpg
 
+
