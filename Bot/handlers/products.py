@@ -110,7 +110,7 @@ async def back_to_category_menu(call: CallbackQuery, state: FSMContext):
         keyboard.append(row)
 
     markup = InlineKeyboardMarkup(inline_keyboard=keyboard)
-    image_url = FSInputFile("handlers/1.jpg")
+    image_url = FSInputFile("app/handlers/1.jpg")
 
     await call.message.answer_photo(
         photo=image_url,
@@ -143,7 +143,7 @@ async def show_categories(msg: Message, state: FSMContext):
         keyboard.append(row)
 
     markup = InlineKeyboardMarkup(inline_keyboard=keyboard)
-    image_url = FSInputFile("handlers/1.jpg")
+    image_url = FSInputFile("app/handlers/1.jpg")
 
     await msg.answer_photo(
         photo=image_url,
@@ -191,7 +191,7 @@ async def category_selected(call: CallbackQuery, state: FSMContext):
     ])
 
     markup = InlineKeyboardMarkup(inline_keyboard=keyboard)
-    image_url = FSInputFile("handlers/1.jpg")
+    image_url = FSInputFile("app/handlers/1.jpg")
 
     await call.message.answer_photo(
         photo=image_url,
