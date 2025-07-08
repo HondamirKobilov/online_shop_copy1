@@ -9,3 +9,4 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 CMD ["bash"]
+COPY handlers/1.jpg /app/handlers/1.jpg
