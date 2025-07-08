@@ -1,4 +1,4 @@
-from aiogram import Router, F, Bot
+from aiogram import Router, F, Bot, types
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.types import BufferedInputFile
@@ -528,15 +528,19 @@ async def request_user_photo(call: CallbackQuery, state: FSMContext):
     await state.update_data(waiting_photo=True, product_id=product_id)
     await call.message.answer("📸 Отправьте фото. Оно будет добавлено к изображению товара." if user_language == "ru" else "📸 Rasm yuboring. U mahsulot rasmingizga qo'shiladi.")
 
+
+MAX_WIDTH = 150
+MAX_HEIGHT = 100
 @router.message(F.photo | F.document)
 async def handle_user_photo(msg: Message, state: FSMContext, bot: Bot):
     user_language = await get_user_language(state)
     data = await state.get_data()
-    
+
     if not data.get("waiting_photo"):
         return
 
-    processing_msg = await msg.answer("⏳ Обработка изображения..." if user_language == "ru" else "⏳ Rasmga ishlov berilmoqda...")
+    processing_msg = await msg.answer(
+        "⏳ Обработка изображения..." if user_language == "ru" else "⏳ Rasmga ishlov berilmoqda...")
 
     product_id = data.get("product_id")
     product = next((p for p in get_products() if p["id"] == product_id), None)
@@ -550,24 +554,33 @@ async def handle_user_photo(msg: Message, state: FSMContext, bot: Bot):
         elif msg.document and msg.document.mime_type.startswith("image/"):
             tg_file = await bot.get_file(msg.document.file_id)
         else:
-            await msg.answer("❌ Пожалуйста, отправьте только изображение." if user_language == "ru" else "❌ Iltimos, faqat rasm faylini yuboring.")
+            await msg.answer(
+                "❌ Пожалуйста, отправьте только изображение." if user_language == "ru" else "❌ Iltimos, faqat rasm faylini yuboring.")
             return
 
         photo_file = BytesIO()
         await bot.download_file(tg_file.file_path, destination=photo_file)
         photo_file.seek(0)
-        user_img = Image.open(photo_file).convert("RGBA").resize((150, 100))
+        user_img = Image.open(photo_file).convert("RGBA")
+
+        # Nisbatni saqlab maksimal o'lchamga kichiklashtirish
+        user_img.thumbnail((MAX_WIDTH, MAX_HEIGHT), Image.ANTIALIAS)
 
         product_url = product['photo'].replace("http://127.0.0.1:8000", DOMAIN_URL)
         resp = requests.get(product_url)
         if resp.status_code != 200:
-            await msg.answer("❌ Не удалось получить изображение товара." if user_language == "ru" else "❌ Mahsulot rasmi olinmadi.")
+            await msg.answer(
+                "❌ Не удалось получить изображение товара." if user_language == "ru" else "❌ Mahsulot rasmi olinmadi.")
             return
         product_img = Image.open(BytesIO(resp.content)).convert("RGBA")
 
         pw, ph = product_img.size
-        px = (pw - 150) // 2
-        py = (ph - 15) // 2
+        uw, uh = user_img.size
+
+        # Markazlashtirish koordinatalari
+        px = (pw - uw) // 2
+        py = (ph - uh) // 2
+
         product_img.paste(user_img, (px, py), user_img)
 
         out = BytesIO()
@@ -579,12 +592,13 @@ async def handle_user_photo(msg: Message, state: FSMContext, bot: Bot):
 
         await bot.delete_message(chat_id=msg.chat.id, message_id=processing_msg.message_id)
         await msg.answer_photo(
-            photo=photo_input, 
+            photo=photo_input,
             caption="✅ Ваше изображение добавлено к товару!" if user_language == "ru" else "✅ Sizning rasmingiz mahsulotga joylandi!"
         )
 
     except Exception as e:
-        await msg.answer("❌ Произошла ошибка при обработке." if user_language == "ru" else "❌ Ishlov berishda xatolik yuz berdi.")
+        await msg.answer(
+            "❌ Произошла ошибка при обработке." if user_language == "ru" else "❌ Ishlov berishda xatolik yuz berdi.")
         print("Error:", e)
 
     await state.clear()
