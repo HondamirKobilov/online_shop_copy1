@@ -26,7 +26,7 @@ services:
     container_name: nginx_proxy
     restart: always
     ports:
-      - "80:80"
+      - "90:09"
       - "443:443"
     volumes:
       - ./nginx/conf:/etc/nginx/conf.d
