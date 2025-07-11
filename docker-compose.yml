@@ -18,22 +18,9 @@ services:
     command: python Bot/main.py
     volumes:
       - .:/app
+    ports:
+      - "9009:9009"  # Map host port 9009 to container port 9009
     environment:
       - PYTHONPATH=/app
-    depends_on:
-      - web
-
-  nginx:
-    image: nginx:latest
-    container_name: nginx_proxy
-    restart: always
-    ports:
-      - "9009:80"     # Docker Nginx available at http://your-server-ip:9009
-      - "9443:443"    # Optional: enable if you configure SSL inside Docker
-    volumes:
-      - ./nginx/conf:/etc/nginx/conf.d
-      # These certbot paths are optional — remove if not using SSL in Docker
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
     depends_on:
       - web
