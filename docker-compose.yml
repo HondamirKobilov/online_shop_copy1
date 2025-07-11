@@ -7,6 +7,8 @@ services:
     command: python manage.py runserver 0.0.0.0:9009
     volumes:
       - .:/app
+    expose:
+      - 9009
     ports:
       - "9009:9009"
     environment:
