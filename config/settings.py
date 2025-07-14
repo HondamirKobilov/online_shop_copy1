@@ -38,7 +38,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://refined-modern-rabbit.ngrok-free.app',
     'http://127.0.0.1:8000',
     "https://525a-84-54-122-26.ngrok-free.app",
-    "https://django-bot.kraft-paket.uz"
+    "https://django-bot.kraft-paket.uz",
+    "https://admin-telegram.kraft-paket.uz"
 ]
 
 
