@@ -1,12 +1,16 @@
+version: '3.8'
+
 services:
   web:
     build: .
     container_name: django_app
-    command: python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:9009
     volumes:
       - .:/app
     expose:
-      - "8000"
+      - 9009
+    ports:
+      - "9009:9009"
     environment:
       - PYTHONPATH=/app
 
@@ -15,29 +19,8 @@ services:
     container_name: telegram_bot
     command: python Bot/main.py
     volumes:
-      - .:/app
+      - .:/app  # Map host port 9009 to container port 9009
     environment:
       - PYTHONPATH=/app
     depends_on:
       - web
-
-  nginx:
-    image: nginx:latest
-    container_name: nginx_proxy
-    restart: always
-    ports:
-      - "90:09"
-      - "443:443"
-    volumes:
-      - ./nginx/conf:/etc/nginx/conf.d
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
-    depends_on:
-      - web
-
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
