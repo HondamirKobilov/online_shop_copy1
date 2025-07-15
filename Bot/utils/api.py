@@ -1,5 +1,6 @@
+import logging
 import requests
-from config import API_BASE_URL
+from Bot.config import API_BASE_URL
 
 def check_user_exists(user_id):
     try:
@@ -113,11 +114,6 @@ def get_user_model_id(telegram_user_id):
     except:
         pass
     return None
-
-
-import logging
-import requests
-from config import API_BASE_URL
 
 logger = logging.getLogger(__name__)
 
