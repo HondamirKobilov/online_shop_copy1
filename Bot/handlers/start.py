@@ -37,7 +37,6 @@ async def lang_ru(call: CallbackQuery, state: FSMContext):
     await state.set_state(RegisterStateRu.fullname)
 
 
-
 @router.callback_query(F.data == "lang_uzz")
 async def lang_ru(call: CallbackQuery):
     await call.message.answer("Marhamat, bosh menu", reply_markup=main_menu_keyboard())

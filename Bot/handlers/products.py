@@ -37,16 +37,14 @@ def generate_quantity_keyboard(product_id: int, quantity: int, price: int, categ
             "quantity": f"🛒 {quantity} dona - {price*quantity:,} so'm",
             "increase": "➕ Ko'paytirish (50)",
             "add": "📥 Savatga qo'shish",
-            "back": "🔙 Orqaga",
-            "upload": "🖼 Rasm qo'shish"
+            "back": "🔙 Orqaga"
         },
         "ru": {
             "decrease": "➖ Уменьшить (50)",
             "quantity": f"🛒 {quantity} шт - {price*quantity:,} сум",
             "increase": "➕ Увеличить (50)",
             "add": "📥 В корзину",
-            "back": "🔙 Назад",
-            "upload": "🖼 Добавить фото"
+            "back": "🔙 Назад"
         }
     }[language]
 
@@ -56,8 +54,7 @@ def generate_quantity_keyboard(product_id: int, quantity: int, price: int, categ
             InlineKeyboardButton(text=texts["increase"], callback_data=f"increase_{product_id}")
         ],
         [InlineKeyboardButton(text=texts["quantity"], callback_data="quantity_info")],
-        [InlineKeyboardButton(text=texts["add"], callback_data=f"addbasket_{product_id}")],
-        [InlineKeyboardButton(text=texts["upload"], callback_data=f"uploadphoto_{product_id}")]
+        [InlineKeyboardButton(text=texts["add"], callback_data=f"addbasket_{product_id}")]
     ]
 
     if category_slug:
@@ -321,22 +318,44 @@ async def color_selected(call: CallbackQuery, state: FSMContext):
     if sizes:
         size_buttons = [
             InlineKeyboardButton(
-                text=size["name_ru"] if user_language == "ru" and "name_ru" in size else size["name"], 
+                text=size["name_ru"] if user_language == "ru" and "name_ru" in size else size["name"],
                 callback_data=f"size_{size['id']}"
             )
             for size in sizes
         ]
         size_keyboard = [size_buttons[i:i + 2] for i in range(0, len(size_buttons), 2)]
+
+        # ✅ Rasm qo‘shish tugmasini oxiriga qo‘shamiz
+        size_keyboard.append([
+            InlineKeyboardButton(
+                text="🌅 Rasm qo'shish",
+                callback_data=f"uploadphoto_{product_id}"
+            )
+        ])
+
         markup = InlineKeyboardMarkup(inline_keyboard=size_keyboard)
 
         await call.message.answer_photo(
             photo=photo_url,
-            caption=caption + "\n\n📏 Пожалуйста, выберите <b>размер</b> товара:" if user_language == "ru" else "\n\n📏 Iltimos, mahsulot uchun <b>razmer</b> tanlang:",
+            caption=(
+                caption + "\n\n📏 Пожалуйста, выберите <b>размер</b> товара:"
+                if user_language == "ru"
+                else caption + "\n\n📏 Iltimos, mahsulot uchun <b>razmer</b> tanlang:"
+            ),
             reply_markup=markup
         )
     else:
         quantity = data.get("quantity", 50)
         keyboard = generate_quantity_keyboard(product_id, quantity, product["price"], language=user_language)
+
+        # ✅ Rasm qo‘shish tugmasini quantity klaviaturasiga ham qo‘shishingiz kerak bo‘lsa:
+        keyboard.inline_keyboard.append([
+            InlineKeyboardButton(
+                text=texts["upload"],
+                callback_data=f"uploadphoto_{product_id}"
+            )
+        ])
+
         await call.message.answer_photo(
             photo=photo_url,
             caption=caption,

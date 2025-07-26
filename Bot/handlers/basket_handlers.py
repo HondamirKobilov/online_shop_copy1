@@ -1,12 +1,13 @@
 from aiogram import Router, F, Bot
 from aiogram.types import (
     Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton,
-    LabeledPrice, PreCheckoutQuery
+    LabeledPrice, PreCheckoutQuery, KeyboardButton
 )
 from aiogram.fsm.context import FSMContext
 
+from Bot.config import CHANNEL_CHAT_ID, API_BASE_URL
 from Bot.utils.api import get_user_by_id
-from config import API_BASE_URL
+# from config import API_BASE_URL
 import requests
 
 router = Router()
@@ -130,7 +131,7 @@ async def show_basket(msg: Message, state: FSMContext):
 @router.callback_query(F.data == "confirm_order")
 async def confirm_order(call: CallbackQuery, state: FSMContext):
     user_language = await get_user_language_from_state(state)
-    
+
     try:
         user = get_user_by_id(call.from_user.id)
         if not user:
@@ -150,12 +151,12 @@ async def confirm_order(call: CallbackQuery, state: FSMContext):
 
         order_details = []
         total_price = 0
-        
+
         for b in user_baskets:
             product = b.get("product", {})
             if not product:
                 continue
-                
+
             color = b.get("color") or {}
             size = b.get("size") or {}
 
@@ -236,6 +237,10 @@ async def cancel_order(call: CallbackQuery, state: FSMContext):
 async def process_checkout_query(query: PreCheckoutQuery, bot: Bot):
     await bot.answer_pre_checkout_query(pre_checkout_query_id=query.id, ok=True)
 
+
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+
 @router.message(F.successful_payment)
 async def process_successful_payment(message: Message, state: FSMContext):
     user_language = await get_user_language_from_state(state)
@@ -266,7 +271,7 @@ async def process_successful_payment(message: Message, state: FSMContext):
             requests.delete(f"{API_BASE_URL}/baskets/{b.get('id')}/")
 
         amount = message.successful_payment.total_amount / 100
-        
+
         success_text = (
             f"✅ Платеж успешно принят!\n"
             f"💰 Сумма: {amount:,.0f} сум\n"
@@ -276,8 +281,29 @@ async def process_successful_payment(message: Message, state: FSMContext):
             f"💰 Miqdor: {amount:,.0f} so'm\n"
             f"🎉 Buyurtmangiz ro'yxatdan o'tkazildi!"
         )
-        
-        await message.answer(success_text)
+
+        # ❗ Inline tugmalarni shu yerga qo‘shamiz
+        delivery_question = (
+            "🏢 Mahsulotni ofisdan kelib olib ketasizmi yoki 📦 dostavka qilib yuboraylikmi?"
+            if user_language == "uz"
+            else "🏢 Заберёте товар из офиса или 📦 сделать доставку?"
+        )
+
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="🏢 Ofisdan olib ketaman" if user_language == "uz" else "🏢 Заберу из офиса",
+                        callback_data="pickup"
+                    ),
+                    InlineKeyboardButton(
+                        text="📦 Dostavka qiling" if user_language == "uz" else "📦 Доставка",
+                        callback_data="delivery"
+                    )
+                ]
+            ]
+        )
+        await message.answer(success_text + "\n\n" + delivery_question, reply_markup=keyboard)
 
     except requests.exceptions.RequestException as e:
         print(f"❌ API so'rovida xatolik: {e}")
@@ -287,3 +313,51 @@ async def process_successful_payment(message: Message, state: FSMContext):
         print(f"❌ Umumiy xatolik: {str(e)}")
         error_msg = "❌ Произошла ошибка." if user_language == "ru" else "❌ Xatolik yuz berdi."
         await message.answer(error_msg)
+
+@router.callback_query(F.data.in_(["pickup", "delivery"]))
+async def handle_delivery_choice(callback: CallbackQuery, state: FSMContext):
+    user_language = await get_user_language_from_state(state)
+
+    if callback.data == "pickup":
+        text = (
+            "✅ Siz ofisdan olib ketishni tanladingiz.\n"
+            "📞 Operatorlarimiz qisqa vaqtdan so‘ng siz bilan bog‘lanishadi."
+            if user_language == "uz"
+            else "✅ Вы выбрали самовывоз.\n📞 Наши операторы скоро с вами свяжутся."
+        )
+        await callback.message.answer(text)
+
+    elif callback.data == "delivery":
+        text = (
+            "📍 Iltimos, joylashuvingizni (location) yuboring."
+            if user_language == "uz"
+            else "📍 Пожалуйста, отправьте свою локацию."
+        )
+
+        # Reply keyboard – Location yuborish tugmasi
+        location_keyboard = ReplyKeyboardMarkup(
+            keyboard=[
+                [KeyboardButton(text="📍 Location yuborish", request_location=True)]
+            ],
+            resize_keyboard=True,
+            one_time_keyboard=True
+        )
+
+        await callback.message.answer(text, reply_markup=location_keyboard)
+
+@router.message(F.location)
+async def get_user_location(message: Message, state: FSMContext):
+    user_language = await get_user_language_from_state(state)
+
+    latitude = message.location.latitude
+    longitude = message.location.longitude
+
+    # Kerak bo‘lsa backendga yuborish
+    # requests.post(f"{API_BASE_URL}/save-location/", json={"lat": latitude, "lon": longitude, "user_id": message.from_user.id})
+
+    text = (
+        "✅ Location qabul qilindi!\n📞 Operatorlarimiz siz bilan bog‘lanishadi."
+        if user_language == "uz"
+        else "✅ Локация получена!\n📞 Наши операторы скоро с вами свяжутся."
+    )
+    await message.answer(text, reply_markup=None)
