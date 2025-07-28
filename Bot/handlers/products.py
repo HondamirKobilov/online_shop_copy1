@@ -5,7 +5,6 @@ from aiogram.types import BufferedInputFile
 from typing import Optional
 from datetime import datetime
 from aiogram.types import InputMediaPhoto
-
 from PIL import Image
 from io import BytesIO
 import requests

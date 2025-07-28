@@ -3,23 +3,23 @@ version: '3.8'
 services:
   web:
     build: .
-    container_name: django_app
-    command: python manage.py runserver 0.0.0.0:9009
+    container_name: online_shop_web_9377
+    command: python manage.py runserver 0.0.0.0:9377
     volumes:
       - .:/app
     expose:
-      - 9009
+      - 9377
     ports:
-      - "9009:9009"
+      - "9377:9377"
     environment:
       - PYTHONPATH=/app
 
   bot:
     build: .
-    container_name: telegram_bot
+    container_name: online_shop_bot_8423
     command: python Bot/main.py
     volumes:
-      - .:/app  # Map host port 9009 to container port 9009
+      - .:/app
     environment:
       - PYTHONPATH=/app
     depends_on:

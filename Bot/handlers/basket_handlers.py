@@ -128,84 +128,152 @@ async def show_basket(msg: Message, state: FSMContext):
         error_msg = "❌ Произошла ошибка." if user_language == "ru" else "❌ Xatolik yuz berdi."
         await msg.answer(error_msg)
 
+
 @router.callback_query(F.data == "confirm_order")
-async def confirm_order(call: CallbackQuery, state: FSMContext):
-    user_language = await get_user_language_from_state(state)
+async def confirm_order_handler(callback: CallbackQuery, state: FSMContext):
+    user_id = callback.from_user.id
+    user_data = get_user_by_id(user_id)
+    if not user_data:
+        await callback.message.answer("❌ Foydalanuvchi topilmadi.")
+        return
 
+    # API orqali barcha savatlarni olish
     try:
-        user = get_user_by_id(call.from_user.id)
-        if not user:
-            error_msg = "❌ Пользователь не найден." if user_language == "ru" else "❌ Foydalanuvchi topilmadi."
-            await call.message.answer(error_msg)
-            return
-
         res = requests.get(f"{API_BASE_URL}/baskets/")
         res.raise_for_status()
         all_baskets = res.json()
-        user_baskets = [b for b in all_baskets if b.get("user", {}).get("user_id") == call.from_user.id]
+        user_baskets = [b for b in all_baskets if b.get("user", {}).get("user_id") == user_id]
 
         if not user_baskets:
-            empty_msg = "🛒 Ваша корзина пуста." if user_language == "ru" else "🛒 Savatingiz bo'sh."
-            await call.message.answer(empty_msg)
+            await callback.message.answer("❌ <b>Savatingiz bo‘sh.</b>", parse_mode=ParseMode.HTML)
             return
 
-        order_details = []
-        total_price = 0
+        # Xabar dizayni
+        text = "<b>🛍 Yangi buyurtma!</b>\n\n"
+        total = 0
 
-        for b in user_baskets:
+        for idx, b in enumerate(user_baskets, start=1):
             product = b.get("product", {})
-            if not product:
-                continue
+            color = b.get("color")
+            size = b.get("size")
 
-            color = b.get("color") or {}
-            size = b.get("size") or {}
+            color_name = color.get("name", "Noma'lum") if color else "Noma'lum"
+            size_name = size.get("name", "Noma'lum") if size else "Noma'lum"
+            product_name = product.get("product_name", f"Mahsulot ID: {product.get('id', '?')}")
+            price = product.get("price", 0)
+            quantity = b.get("number", 0)
+            item_total = price * quantity
+            total += item_total
 
-            order_details.append({
-                "product": product.get("id"),
-                "number": b.get("number", 0),
-                "color": color.get("id") if color else None,
-                "size": size.get("id") if size else None
-            })
+            text += (
+                f"<b>{idx}. {product_name}</b>\n"
+                f"🎨 Rang: {color_name}\n"
+                f"📏 Razmer: {size_name}\n"
+                f"🔢 Soni: {quantity} dona\n"
+                f"💵 Narxi: {price:,} so‘m\n"
+                f"🧮 Jami: <b>{item_total:,} so‘m</b>\n\n"
+            )
 
-            total_price += product.get("price", 0) * b.get("number", 0)
+        text += f"<b>📻 Umumiy:</b> <code>{total:,}</code> so‘m\n"
+        text += f"<i>👤 Foydalanuvchi: {callback.from_user.full_name} (@{callback.from_user.username or 'username yo‘q'})</i>"
 
-        if total_price <= 0:
-            error_msg = "❌ Общая сумма заказа должна быть больше 0." if user_language == "ru" else "❌ Buyurtma summasi 0 dan katta bo'lishi kerak."
-            await call.message.answer(error_msg)
-            return
-
-        await state.update_data(
-            user_id=user.get("id"),
-            user_phone=user.get("user_phone"),
-            order_details=order_details,
-            total_price=total_price
+        # Kanalga yuborish
+        await callback.bot.send_message(
+            chat_id=CHANNEL_CHAT_ID,  # o‘rniga kanal chat_id sini yoz
+            text=text,
+            parse_mode=ParseMode.HTML
         )
 
-        label = "Оплата корзины" if user_language == "ru" else "Savat to'lovi"
-        title = "Оплата заказа" if user_language == "ru" else "Buyurtma to'lovi"
-        description = "Оплата товаров" if user_language == "ru" else "Mahsulotlar uchun to'lov"
-
-        await call.message.answer_invoice(
-            title=title,
-            description=description,
-            provider_token="387026696:LIVE:68233ecd719315ab299f65c8",
-            #provider_token="398062629:TEST:999999999_F91D8F69C042267444B74CC0B3C747757EB0E065",
-            currency="UZS",
-            prices=[LabeledPrice(label=label, amount=int(total_price * 100))],
-            payload="buyurtma_tolov",
-            start_parameter="buyurtma-start",
-            need_phone_number=True,
-            need_name=True
-        )
+        # Foydalanuvchiga xabar
+        await callback.message.answer("✅ Buyurtmangiz qabul qilindi va adminlarga yuborildi.")
 
     except requests.exceptions.RequestException as e:
-        print(f"❌ API so'rovida xatolik: {e}")
-        error_msg = "❌ Ошибка при запуске платежа." if user_language == "ru" else "❌ To'lovni boshlashda xatolik yuz berdi."
-        await call.message.answer(error_msg)
+        print(f"❌ API xatosi: {e}")
+        await callback.message.answer("❌ Savat ma'lumotlarini olishda xatolik.")
     except Exception as e:
-        print(f"❌ Umumiy xatolik: {str(e)}")
-        error_msg = "❌ Произошла ошибка." if user_language == "ru" else "❌ Xatolik yuz berdi."
-        await call.message.answer(error_msg)
+        print(f"❌ Xatolik: {e}")
+        await callback.message.answer("❌ Buyurtmani yuborishda xatolik yuz berdi.")
+
+
+# @router.callback_query(F.data == "confirm_order")
+# async def confirm_order(call: CallbackQuery, state: FSMContext):
+#     user_language = await get_user_language_from_state(state)
+#
+#     try:
+#         user = get_user_by_id(call.from_user.id)
+#         if not user:
+#             error_msg = "❌ Пользователь не найден." if user_language == "ru" else "❌ Foydalanuvchi topilmadi."
+#             await call.message.answer(error_msg)
+#             return
+#
+#         res = requests.get(f"{API_BASE_URL}/baskets/")
+#         res.raise_for_status()
+#         all_baskets = res.json()
+#         user_baskets = [b for b in all_baskets if b.get("user", {}).get("user_id") == call.from_user.id]
+#
+#         if not user_baskets:
+#             empty_msg = "🛒 Ваша корзина пуста." if user_language == "ru" else "🛒 Savatingiz bo'sh."
+#             await call.message.answer(empty_msg)
+#             return
+#
+#         order_details = []
+#         total_price = 0
+#
+#         for b in user_baskets:
+#             product = b.get("product", {})
+#             if not product:
+#                 continue
+#
+#             color = b.get("color") or {}
+#             size = b.get("size") or {}
+#
+#             order_details.append({
+#                 "product": product.get("id"),
+#                 "number": b.get("number", 0),
+#                 "color": color.get("id") if color else None,
+#                 "size": size.get("id") if size else None
+#             })
+#
+#             total_price += product.get("price", 0) * b.get("number", 0)
+#
+#         if total_price <= 0:
+#             error_msg = "❌ Общая сумма заказа должна быть больше 0." if user_language == "ru" else "❌ Buyurtma summasi 0 dan katta bo'lishi kerak."
+#             await call.message.answer(error_msg)
+#             return
+#
+#         await state.update_data(
+#             user_id=user.get("id"),
+#             user_phone=user.get("user_phone"),
+#             order_details=order_details,
+#             total_price=total_price
+#         )
+#
+#         label = "Оплата корзины" if user_language == "ru" else "Savat to'lovi"
+#         title = "Оплата заказа" if user_language == "ru" else "Buyurtma to'lovi"
+#         description = "Оплата товаров" if user_language == "ru" else "Mahsulotlar uchun to'lov"
+#
+#         await call.message.answer_invoice(
+#             title=title,
+#             description=description,
+#             provider_token="387026696:LIVE:68233ecd719315ab299f65c8",
+#             #provider_token="398062629:TEST:999999999_F91D8F69C042267444B74CC0B3C747757EB0E065",
+#             currency="UZS",
+#             prices=[LabeledPrice(label=label, amount=int(total_price * 100))],
+#             payload="buyurtma_tolov",
+#             start_parameter="buyurtma-start",
+#             need_phone_number=True,
+#             need_name=True
+#         )
+#
+#     except requests.exceptions.RequestException as e:
+#         print(f"❌ API so'rovida xatolik: {e}")
+#         error_msg = "❌ Ошибка при запуске платежа." if user_language == "ru" else "❌ To'lovni boshlashda xatolik yuz berdi."
+#         await call.message.answer(error_msg)
+#     except Exception as e:
+#         print(f"❌ Umumiy xatolik: {str(e)}")
+#         error_msg = "❌ Произошла ошибка." if user_language == "ru" else "❌ Xatolik yuz berdi."
+#         await call.message.answer(error_msg)
+
 
 @router.callback_query(F.data == "cancel_order")
 async def cancel_order(call: CallbackQuery, state: FSMContext):
