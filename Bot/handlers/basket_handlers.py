@@ -191,8 +191,9 @@ async def confirm_order_handler(callback: CallbackQuery, state: FSMContext):
         print(f"❌ API xatosi: {e}")
         await callback.message.answer("❌ Savat ma'lumotlarini olishda xatolik.")
     except Exception as e:
-        print(f"❌ Xatolik: {e}")
-        await callback.message.answer("❌ Buyurtmani yuborishda xatolik yuz berdi.")
+        print("❌ Xatolik:", e)
+        print(traceback.format_exc())  # Bu to‘liq xatolikni chiqaradi
+        await callback.message.answer(f"❌ Buyurtmani yuborishda xatolik: {e}")
 
 
 # @router.callback_query(F.data == "confirm_order")
