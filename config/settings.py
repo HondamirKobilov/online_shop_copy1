@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env.str("SECRET_KEY", "django-insecure-f!ma7pm+!ge3=wey%t*-l38&o0mn8o_5u@5r%vt8fmn@w_0gh^")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DEBUG", False)
+DEBUG = env.bool("DEBUG", True)
 
 ALLOWED_HOSTS = ['*']
 
@@ -39,7 +39,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     "https://525a-84-54-122-26.ngrok-free.app",
     "https://django-bot.kraft-paket.uz",
-    "https://admin-telegram.kraft-paket.uz",
+    "https://admin-telegram.kraft-paket.uz"
     "https://admin1.ndc-agency.uz"
 ]
 
