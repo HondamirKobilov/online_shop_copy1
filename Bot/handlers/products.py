@@ -39,9 +39,9 @@ def generate_quantity_keyboard(product_id: int, quantity: int, price: int, categ
             "back": "🔙 Orqaga"
         },
         "ru": {
-            "decrease": "➖ Уменьшить (50)",
+            "decrease": "➖ Уменьшить (-1)",
             "quantity": f"🛒 {quantity} шт - {price*quantity:,} сум",
-            "increase": "➕ Увеличить (50)",
+            "increase": "➕ Увеличить (+1)",
             "add": "📥 В корзину",
             "back": "🔙 Назад"
         }
@@ -209,7 +209,7 @@ async def product_detail(call: CallbackQuery, state: FSMContext):
     category_id = product["category"]
     category_slug = get_category_slug_by_id(category_id) or "unknown"
 
-    quantity = 50
+    quantity = 1
     await state.update_data(product_id=product_id, quantity=quantity)
 
     description = product.get('description_ru', product['description']) if user_language == "ru" else product['description']
