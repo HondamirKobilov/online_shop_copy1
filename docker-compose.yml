@@ -4,10 +4,13 @@ services:
   web:
     build: .
     container_name: online_shop_web_9377
-    ports:
-      - "9377:9377"
+    command: python manage.py runserver 0.0.0.0:9377
     volumes:
       - .:/app
+    expose:
+      - 9377
+    ports:
+      - "9377:9377"
     environment:
       - PYTHONPATH=/app
 
