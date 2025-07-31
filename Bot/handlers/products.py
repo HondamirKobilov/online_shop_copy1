@@ -399,8 +399,9 @@ async def size_selected(call: CallbackQuery, state: FSMContext):
 async def increase_quantity(call: CallbackQuery, state: FSMContext):
     user_language = await get_user_language(state)
     data = await state.get_data()
-    quantity = data.get("quantity", 50)
-    quantity += 50
+    quantity = data.get("quantity", 1)  # boshlang‘ich qiymat 1 dona
+
+    quantity += 1  # 1 taga oshiryapti
     product_id = int(call.data.replace("increase_", ""))
     await state.update_data(quantity=quantity)
 
@@ -410,27 +411,29 @@ async def increase_quantity(call: CallbackQuery, state: FSMContext):
 
         await call.message.edit_reply_markup(
             reply_markup=generate_quantity_keyboard(
-                product_id, 
-                quantity, 
-                product["price"], 
+                product_id,
+                quantity,
+                product["price"],
                 category_slug,
                 user_language
             )
         )
 
+
 @router.callback_query(F.data.startswith("decrease_"))
 async def decrease_quantity(call: CallbackQuery, state: FSMContext):
     user_language = await get_user_language(state)
     data = await state.get_data()
-    quantity = data.get("quantity", 50)
-    if quantity <= 50:
+    quantity = data.get("quantity", 1)
+
+    if quantity <= 1:
         await call.answer(
-            "❗️Минимальное количество - 50!" if user_language == "ru" else "❗️Eng kamida 50 dona bo'lishi kerak!", 
+            "❗️Минимальное количество - 1!" if user_language == "ru" else "❗️Eng kamida 1 dona bo'lishi kerak!",
             show_alert=True
         )
         return
 
-    quantity -= 50
+    quantity -= 1  # faqat 1 taga kamayadi
     product_id = int(call.data.replace("decrease_", ""))
     await state.update_data(quantity=quantity)
 
@@ -440,13 +443,14 @@ async def decrease_quantity(call: CallbackQuery, state: FSMContext):
 
         await call.message.edit_reply_markup(
             reply_markup=generate_quantity_keyboard(
-                product_id, 
-                quantity, 
-                product["price"], 
+                product_id,
+                quantity,
+                product["price"],
                 category_slug,
                 user_language
             )
         )
+
 
 # Add to basket handler
 @router.callback_query(F.data.startswith("addbasket_"))

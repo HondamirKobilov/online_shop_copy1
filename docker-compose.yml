@@ -6,7 +6,7 @@ services:
     container_name: online_shop_web_9377
     command: python manage.py runserver 0.0.0.0:9377
     volumes:
-      - .:/app
+      - ./staticfiles:/app/staticfiles
     expose:
       - 9377
     ports:
