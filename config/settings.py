@@ -31,7 +31,7 @@ SECRET_KEY = env.str("SECRET_KEY", "django-insecure-f!ma7pm+!ge3=wey%t*-l38&o0mn
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", True)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['admin1.ndc-agency.uz', 'localhost', '127.0.0.1']
 
 # CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = [
