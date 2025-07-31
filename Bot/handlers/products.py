@@ -32,9 +32,9 @@ def generate_quantity_keyboard(product_id: int, quantity: int, price: int, categ
     # Button texts in both languages
     texts = {
         "uz": {
-            "decrease": "➖ Kamaytirish (50)",
+            "decrease": "➖ Kamaytirish (-1)",
             "quantity": f"🛒 {quantity} dona - {price*quantity:,} so'm",
-            "increase": "➕ Ko'paytirish (50)",
+            "increase": "➕ Ko'paytirish (+1)",
             "add": "📥 Savatga qo'shish",
             "back": "🔙 Orqaga"
         },
