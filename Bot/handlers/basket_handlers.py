@@ -177,8 +177,7 @@ async def confirm_order_handler(callback: CallbackQuery, state: FSMContext):
             )
 
         text += f"<b>📻 Umumiy:</b> <code>{total:,}</code> so‘m\n"
-        text += f"<i>👤 Foydalanuvchi: {callback.from_user.full_name} (@{callback.from_user.username or 'username yo‘q'})</i>"
-
+        text += f"\n📞 Tel: <code>{user_data.get('phone_number', 'ko‘rsatilmagan')}</code>"
         # Kanalga yuborish
         await callback.bot.send_message(
             chat_id=CHANNEL_CHAT_ID,  # o‘rniga kanal chat_id sini yoz
